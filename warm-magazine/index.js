@@ -1,0 +1,218 @@
+export default {
+  async fetch(request, env, ctx) {
+    // 从URL参数中获取数据
+    const url = new URL(request.url);
+    const title = url.searchParams.get('title') || '消息推送';
+    const message = url.searchParams.get('message') || '无告警信息';
+    const date = url.searchParams.get('date') || '无时间信息';
+    const html = `<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title id="pageTitle">\${title}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-a: #f6f2e8;
+      --bg-b: #d7ecf2;
+      --ink: #1c2d36;
+      --subtle: #4f6572;
+      --card: rgba(255, 255, 255, 0.8);
+      --line: rgba(28, 45, 54, 0.14);
+      --accent: #d97745;
+      --accent-soft: rgba(217, 119, 69, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 600px at 12% 10%, rgba(246, 180, 96, 0.22), transparent 55%),
+        radial-gradient(900px 500px at 90% 85%, rgba(67, 142, 165, 0.2), transparent 60%),
+        linear-gradient(160deg, var(--bg-a), var(--bg-b));
+      font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    .paper {
+      width: min(860px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      padding: clamp(22px, 4vw, 40px);
+      background: var(--card);
+      backdrop-filter: blur(6px);
+      box-shadow:
+        0 24px 60px rgba(39, 59, 69, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      transform: translateY(10px);
+      opacity: 0;
+      animation: rise 650ms ease-out forwards;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .paper::after {
+      content: "";
+      position: absolute;
+      inset: auto -80px -80px auto;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      pointer-events: none;
+    }
+
+    .meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: var(--subtle);
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 6px var(--accent-soft);
+    }
+
+    .title {
+      margin: 0;
+      font-family: "Fraunces", serif;
+      font-size: clamp(30px, 5vw, 52px);
+      line-height: 1.12;
+      letter-spacing: 0.4px;
+      max-width: 18ch;
+      text-wrap: balance;
+    }
+
+    .divider {
+      margin: 24px 0;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(28, 45, 54, 0.34), rgba(28, 45, 54, 0.06));
+    }
+
+    .message {
+      margin: 0;
+      font-size: clamp(16px, 2.35vw, 22px);
+      line-height: 1.9;
+      color: #243840;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 96px;
+    }
+
+    .footer {
+      margin-top: 28px;
+      display: flex;
+      justify-content: flex-end;
+      color: var(--subtle);
+      font-size: 14px;
+      letter-spacing: 0.4px;
+    }
+
+    .date-chip {
+      border: 1px dashed rgba(28, 45, 54, 0.28);
+      border-radius: 999px;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.56);
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    @keyframes rise {
+      from {
+        transform: translateY(12px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 14px;
+      }
+
+      .meta {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .date-chip {
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="paper" role="main" aria-live="polite">
+    <div class="meta">
+      <span class="badge"><span class="dot" aria-hidden="true"></span>WXPush 即时通知</span>
+    </div>
+
+    <h1 class="title" id="title">\${title}</h1>
+
+    <div class="divider" aria-hidden="true"></div>
+
+    <p class="message" id="message">\${message}</p>
+
+    <div class="footer">
+      <div class="date-chip" id="date">\${date}</div>
+    </div>
+  </main>
+
+  <script>
+    const query = new URLSearchParams(window.location.search);
+    const title = query.get('title') || '消息推送';
+    const message = query.get('message') || '无告警信息';
+    const date = query.get('date') || '无时间信息';
+
+    document.getElementById('pageTitle').textContent = title;
+    document.getElementById('title').textContent = title;
+    document.getElementById('message').textContent = message;
+    document.getElementById('date').textContent = date;
+  </script>
+</body>
+
+</html>
+
+`;
+    return new Response(html, {
+      headers: {
+        'content-type': 'text/html;charset=UTF-8',
+      },
+    });
+  },
+};

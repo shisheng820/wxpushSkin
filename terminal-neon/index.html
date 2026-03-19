@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title id="pageTitle">消息推送</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+SC:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a1117;
+      --panel: #0f1a23;
+      --panel-2: #132230;
+      --line: #26475d;
+      --txt: #b7f2dd;
+      --muted: #7fbcaa;
+      --accent: #34f5c4;
+      --warn: #ffc266;
+      --danger: #ff6b8e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 16px;
+      font-family: "JetBrains Mono", "Noto Sans SC", monospace;
+      background:
+        linear-gradient(165deg, #05090d 0%, #0b131a 42%, #101f2a 100%);
+      color: var(--txt);
+      display: grid;
+      place-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scan {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.02) 0px,
+          rgba(255, 255, 255, 0.02) 1px,
+          transparent 1px,
+          transparent 4px
+        );
+      mix-blend-mode: screen;
+      opacity: 0.26;
+      z-index: 0;
+    }
+
+    .grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(52, 245, 196, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(52, 245, 196, 0.06) 1px, transparent 1px);
+      background-size: 34px 34px;
+      mask-image: radial-gradient(circle at center, black 22%, transparent 85%);
+      z-index: 0;
+    }
+
+    .terminal {
+      position: relative;
+      z-index: 1;
+      width: min(940px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: var(--panel);
+      box-shadow:
+        0 26px 70px rgba(0, 0, 0, 0.62),
+        0 0 0 1px rgba(52, 245, 196, 0.08),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+      animation: boot 620ms ease-out;
+    }
+
+    .bar {
+      height: 44px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #12212d, #101b26);
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      gap: 10px;
+    }
+
+    .light {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      opacity: 0.9;
+    }
+
+    .light:nth-child(1) {
+      background: var(--danger);
+    }
+
+    .light:nth-child(2) {
+      background: var(--warn);
+    }
+
+    .light:nth-child(3) {
+      background: var(--accent);
+    }
+
+    .bar-title {
+      margin-left: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .screen {
+      padding: clamp(16px, 3.2vw, 30px);
+      background:
+        radial-gradient(600px 220px at 85% -20%, rgba(52, 245, 196, 0.1), transparent 68%),
+        linear-gradient(180deg, var(--panel), var(--panel-2));
+    }
+
+    .line {
+      display: flex;
+      gap: 10px;
+      margin: 0 0 14px;
+      font-size: 13px;
+      color: var(--muted);
+      word-break: break-all;
+    }
+
+    .prompt {
+      color: var(--accent);
+      flex: none;
+    }
+
+    h1 {
+      margin: 10px 0 18px;
+      font-size: clamp(24px, 4.5vw, 42px);
+      line-height: 1.2;
+      color: #d5fff1;
+      letter-spacing: 0.02em;
+      text-wrap: balance;
+    }
+
+    .payload {
+      border: 1px solid rgba(52, 245, 196, 0.28);
+      border-radius: 14px;
+      background: rgba(5, 12, 18, 0.66);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .payload .head {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .payload pre {
+      margin: 0;
+      font-family: inherit;
+      font-size: clamp(14px, 2.15vw, 18px);
+      line-height: 1.8;
+      color: var(--txt);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .chip {
+      border: 1px solid rgba(127, 188, 170, 0.32);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--muted);
+      background: rgba(8, 15, 20, 0.7);
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    @keyframes boot {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.995);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 10px;
+      }
+
+      .chip {
+        white-space: normal;
+      }
+
+      .line {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="grid" aria-hidden="true"></div>
+  <div class="scan" aria-hidden="true"></div>
+
+  <main class="terminal" role="main" aria-live="polite">
+    <div class="bar">
+      <span class="light"></span>
+      <span class="light"></span>
+      <span class="light"></span>
+      <span class="bar-title">wxpush://console</span>
+    </div>
+
+    <section class="screen">
+      <p class="line"><span class="prompt">$</span><span>init push job --channel wechat --priority high</span></p>
+      <h1 id="title">消息推送</h1>
+
+      <article class="payload">
+        <div class="head">Payload.message</div>
+        <pre id="message">无告警信息</pre>
+      </article>
+
+      <div class="meta">
+        <span class="chip">status: delivered</span>
+        <span class="chip" id="date">timestamp: 无时间信息</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const query = new URLSearchParams(window.location.search);
+    const title = query.get('title') || '消息推送';
+    const message = query.get('message') || '无告警信息';
+    const date = query.get('date') || '无时间信息';
+
+    document.getElementById('pageTitle').textContent = title;
+    document.getElementById('title').textContent = title;
+    document.getElementById('message').textContent = message;
+    document.getElementById('date').textContent = `timestamp: ${date}`;
+  </script>
+</body>
+
+</html>

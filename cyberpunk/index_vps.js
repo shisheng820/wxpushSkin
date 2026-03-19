@@ -1,0 +1,305 @@
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const title = url.searchParams.get('title') || '消息推送';
+    const message = url.searchParams.get('message') || '无告警信息';
+    const date = url.searchParams.get('date') || '无时间信息';
+    const html = `<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title id="pageTitle">\${title}</title>
+  <style>
+    :root {
+      --bg: #0d0d12;
+      --panel: #151520;
+      --border: #2a2a3d;
+      --neon-pink: #ff2d6a;
+      --neon-blue: #00d4ff;
+      --neon-purple: #b94dff;
+      --text: #e8e8f0;
+      --muted: #7a7a8c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 16px;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .glitch-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 212, 255, 0.03) 2px,
+          rgba(0, 212, 255, 0.03) 4px
+        );
+      animation: scan 8s linear infinite;
+      z-index: 0;
+    }
+
+    .city-grid {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40%;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, transparent 0%, rgba(255, 45, 106, 0.08) 100%),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 80px,
+          rgba(185, 77, 255, 0.15) 80px,
+          rgba(185, 77, 255, 0.15) 82px
+        );
+      z-index: 0;
+      mask-image: linear-gradient(180deg, transparent 0%, black 100%);
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: min(920px, 100%);
+      border: 1px solid var(--border);
+      border-radius: 0;
+      background: var(--panel);
+      box-shadow:
+        0 0 40px rgba(255, 45, 106, 0.15),
+        0 0 80px rgba(0, 212, 255, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      animation: glitch-in 0.5s ease-out;
+    }
+
+    .container::before {
+      content: "";
+      position: absolute;
+      top: -1px;
+      left: 20px;
+      right: 20px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--neon-pink), var(--neon-blue), transparent);
+    }
+
+    .header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: linear-gradient(180deg, rgba(255, 45, 106, 0.05), transparent);
+    }
+
+    .cyber-icon {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--neon-blue);
+      position: relative;
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    .cyber-icon::before {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      background: var(--neon-pink);
+    }
+
+    .header-text {
+      font-size: 12px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--neon-blue);
+    }
+
+    .content {
+      padding: clamp(24px, 4vw, 40px);
+    }
+
+    h1 {
+      margin: 0 0 24px;
+      font-size: clamp(28px, 5vw, 48px);
+      line-height: 1.1;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: linear-gradient(90deg, var(--text), var(--neon-pink));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      position: relative;
+    }
+
+    .message-box {
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.4);
+      padding: 20px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .message-box::before {
+      content: "DATA_STREAM";
+      position: absolute;
+      top: -10px;
+      left: 16px;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--neon-purple);
+      background: var(--panel);
+      padding: 0 8px;
+    }
+
+    .message-box::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--neon-blue), var(--neon-pink));
+    }
+
+    .message {
+      margin: 0;
+      font-size: clamp(15px, 2.2vw, 19px);
+      line-height: 1.8;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .meta-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .tag--highlight {
+      border-color: var(--neon-blue);
+      color: var(--neon-blue);
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+    }
+
+    .blink {
+      width: 8px;
+      height: 8px;
+      background: var(--neon-pink);
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes scan {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(4px); }
+    }
+
+    @keyframes glitch-in {
+      0% {
+        opacity: 0;
+        transform: translateX(-10px);
+        filter: hue-rotate(90deg);
+      }
+      50% {
+        opacity: 0.5;
+        transform: translateX(5px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0);
+        filter: hue-rotate(0deg);
+      }
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 10px var(--neon-blue); }
+      50% { box-shadow: 0 0 20px var(--neon-blue), 0 0 30px rgba(0, 212, 255, 0.3); }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    @media (max-width: 640px) {
+      .header {
+        padding: 16px;
+      }
+      .content {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="glitch-bg" aria-hidden="true"></div>
+  <div class="city-grid" aria-hidden="true"></div>
+
+  <main class="container" role="main" aria-live="polite">
+    <header class="header">
+      <div class="cyber-icon" aria-hidden="true"></div>
+      <span class="header-text">WXPUSH // NEURAL LINK</span>
+    </header>
+
+    <section class="content">
+      <h1 id="title">\${title}</h1>
+
+      <div class="message-box">
+        <p class="message" id="message">\${message}</p>
+      </div>
+
+      <div class="meta-bar">
+        <span class="tag tag--highlight"><span class="blink"></span>DELIVERED</span>
+        <span class="tag" id="date">\${date}</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const query = new URLSearchParams(window.location.search);
+    document.getElementById('pageTitle').textContent = query.get('title') || '消息推送';
+    document.getElementById('title').textContent = query.get('title') || '消息推送';
+    document.getElementById('message').textContent = query.get('message') || '无告警信息';
+    document.getElementById('date').textContent = query.get('date') || '无时间信息';
+  </script>
+</body>
+
+</html>
+`;
+    return new Response(html, {
+      headers: { 'content-type': 'text/html;charset=UTF-8' },
+    });
+  },
+};
