@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>消息推送</title>
+    <title id="pageTitle">消息推送</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -134,7 +134,7 @@
                 <div class="terminal-button"></div>
                 <div class="terminal-button"></div>
             </div>
-            <div class="terminal-title">消息推送</div>
+            <div class="terminal-title" id="title">消息推送</div>
         </div>
         <div class="terminal-body">
             <div class="info-card">
@@ -148,28 +148,30 @@
         </div>
     </div>
 
-    <script>
-        function getUrlParams() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return {
-                title: urlParams.get('title') || '消息推送',
-                message: urlParams.get('message') || '无告警信息',
-                date: urlParams.get('date') || '无时间信息'
-            };
-        }
-
-        function fillContent() {
-            const params = getUrlParams();
-            document.getElementById('message').textContent = params.message;
-            document.getElementById('date').textContent = params.date;
-        }
-
-        window.onload = function() {
-            fillContent();
-        };
-    </script>
       <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
       <script>
+          function getUrlParams() {
+              const urlParams = new URLSearchParams(window.location.search);
+              return {
+                  title: urlParams.get('title') || '消息推送',
+                  message: urlParams.get('message') || '无告警信息',
+                  date: urlParams.get('date') || '无时间信息'
+              };
+          }
+
+          function fillContent() {
+              const params = getUrlParams();
+              const pageTitleEl = document.getElementById('pageTitle');
+              const titleEl = document.getElementById('title');
+              const messageEl = document.getElementById('message');
+              const dateEl = document.getElementById('date');
+
+              if (pageTitleEl) pageTitleEl.textContent = params.title;
+              if (titleEl) titleEl.textContent = params.title;
+              if (messageEl) messageEl.textContent = params.message;
+              if (dateEl) dateEl.textContent = params.date;
+          }
+
           // 创建动态粒子背景
           function createParticles() {
               const particlesContainer = document.getElementById('particles');
@@ -216,6 +218,7 @@
   
           // 页面加载时调用
           window.onload = function() {
+              fillContent();
               createParticles();
               renderMarkdown();
           };

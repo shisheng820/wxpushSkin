@@ -1,17 +1,16 @@
 export default {
-    async fetch(request, env, ctx) {
-      // 从URL参数中获取数据
-      const url = new URL(request.url);
-      const title = url.searchParams.get('title') || '消息推送';
-      const message = url.searchParams.get('message') || '无告警信息';
-      const date = url.searchParams.get('date') || '无时间信息';
-      const html = `
-<!DOCTYPE html>
+  async fetch(request, env, ctx) {
+    // 从URL参数中获取数据
+    const url = new URL(request.url);
+    const title = url.searchParams.get('title') || '消息推送';
+    const message = url.searchParams.get('message') || '无告警信息';
+    const date = url.searchParams.get('date') || '无时间信息';
+    const html = `<!DOCTYPE html>
 <html lang="zh-CN" dir="ltr">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>消息推送</title>
+    <title id="pageTitle">\${title}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -130,6 +129,8 @@ export default {
     </style>
 </head>
 <body>
+    <div class="particles" id="particles"></div>
+
     <div class="matrix-bg"></div>
     <div class="matrix-text">WeiXin</div>
 
@@ -140,48 +141,103 @@ export default {
                 <div class="terminal-button"></div>
                 <div class="terminal-button"></div>
             </div>
-            <div class="terminal-title">消息推送</div>
+            <div class="terminal-title" id="title">\${title}</div>
         </div>
         <div class="terminal-body">
             <div class="info-card">
                 <div class="info-label">通知内容</div>
-                <div class="info-content" id="message">无告警信息</div>
+                <div class="info-content" id="message">\${message}</div>
             </div>
             <div class="info-card">
                 <div class="info-label">时间</div>
-                <div class="info-content" id="date">无时间信息</div>
+                <div class="info-content" id="date">\${date}</div>
             </div>
         </div>
     </div>
 
-    <script>
-        function getUrlParams() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return {
-                title: urlParams.get('title') || '消息推送',
-                message: urlParams.get('message') || '无告警信息',
-                date: urlParams.get('date') || '无时间信息'
-            };
-        }
+      <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
+      <script>
+          function getUrlParams() {
+              const urlParams = new URLSearchParams(window.location.search);
+              return {
+                  title: urlParams.get('title') || '消息推送',
+                  message: urlParams.get('message') || '无告警信息',
+                  date: urlParams.get('date') || '无时间信息'
+              };
+          }
 
-        function fillContent() {
-            const params = getUrlParams();
-            document.getElementById('message').textContent = params.message;
-            document.getElementById('date').textContent = params.date;
-        }
+          function fillContent() {
+              const params = getUrlParams();
+              const pageTitleEl = document.getElementById('pageTitle');
+              const titleEl = document.getElementById('title');
+              const messageEl = document.getElementById('message');
+              const dateEl = document.getElementById('date');
 
-        window.onload = function() {
-            fillContent();
-        };
-    </script>
+              if (pageTitleEl) pageTitleEl.textContent = params.title;
+              if (titleEl) titleEl.textContent = params.title;
+              if (messageEl) messageEl.textContent = params.message;
+              if (dateEl) dateEl.textContent = params.date;
+          }
 
-  </body>
-  </html>
-      `;
-      return new Response(html, {
-        headers: {
-          'content-type': 'text/html;charset=UTF-8',
-        },
-      });
-    },
-  };
+          // 创建动态粒子背景
+          function createParticles() {
+              const particlesContainer = document.getElementById('particles');
+              const particleCount = 25;
+              const colors = [
+                  'rgba(0, 188, 212, 0.2)',
+                  'rgba(0, 150, 136, 0.2)',
+                  'rgba(77, 182, 172, 0.15)'
+              ];
+             
+              for (let i = 0; i < particleCount; i++) {
+                  const particle = document.createElement('div');
+                  particle.classList.add('particle');
+                 
+                  // 随机大小
+                  const size = Math.random() * 3 + 1;
+                  particle.style.width = \\\`\\\${size}px\\\`;
+                  particle.style.height = \\\`\\\${size}px\\\`;
+                 
+                  // 随机颜色
+                  const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                  particle.style.background = randomColor;
+                 
+                  // 随机位置
+                  particle.style.left = \\\`\\\${Math.random() * 100}%\\\`;
+                  particle.style.top = \\\`\\\${Math.random() * 100}%\\\`;
+                 
+                  // 随机动画延迟和持续时间
+                  particle.style.animationDelay = \\\`\\\${Math.random() * 20}s\\\`;
+                  particle.style.animationDuration = \\\`\\\${20 + Math.random() * 15}s\\\`;
+                 
+                  particlesContainer.appendChild(particle);
+              }
+          }
+  
+          // 处理 Markdown 渲染
+          function renderMarkdown() {
+              const messageEl = document.getElementById('message');
+              if (messageEl && typeof marked !== 'undefined') {
+                  const markdownText = messageEl.textContent || messageEl.innerText;
+                  messageEl.innerHTML = marked.parse(markdownText);
+              }
+          }
+  
+          // 页面加载时调用
+          window.onload = function() {
+              fillContent();
+              createParticles();
+              renderMarkdown();
+          };
+      </script>
+</body>
+</html>
+
+`;
+    return new Response(html, {
+      headers: {
+        'content-type': 'text/html;charset=UTF-8',
+      },
+    });
+  },
+};

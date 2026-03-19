@@ -1,5 +1,6 @@
 export default {
   async fetch(request, env, ctx) {
+    // 从URL参数中获取数据
     const url = new URL(request.url);
     const title = url.searchParams.get('title') || '消息推送';
     const message = url.searchParams.get('message') || '无告警信息';
@@ -153,19 +154,63 @@ export default {
     </div>
   </main>
 
-  <script>
+    <script>
     const query = new URLSearchParams(window.location.search);
-    document.getElementById('pageTitle').textContent = query.get('title') || '消息推送';
-    document.getElementById('title').textContent = query.get('title') || '消息推送';
-    document.getElementById('message').textContent = query.get('message') || '无告警信息';
-    document.getElementById('date').textContent = query.get('date') || '无时间信息';
+    const title = query.get('title') || '消息推送';
+    const message = query.get('message') || '无告警信息';
+    const date = query.get('date') || '无时间信息';
+
+    function escapeHtml(value) {
+      return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderMarkdown(value) {
+      const normalized = value.replace(/\\r\\n/g, '\\n');
+      const escaped = escapeHtml(normalized);
+
+      return escaped
+        .replace(/^#{1,6}\\s+(.*)\$/gm, '<strong>\$1</strong>')
+        .replace(/^\\s*[-*+]\\s+(.*)\$/gm, '• \$1')
+        .replace(/\\*\\*(.+?)\\*\\*/g, '<strong>\$1</strong>')
+        .replace(/__(.+?)__/g, '<strong>\$1</strong>')
+        .replace(/\\*(.+?)\\*/g, '<em>\$1</em>')
+        .replace(/_(.+?)_/g, '<em>\$1</em>')
+        .replace(/\`([^\`]+)\`/g, '<code>\$1</code>')
+        .replace(/\\[([^\\]]+)\\]\\((https?:\\/\\/[^\\s)]+)\\)/g, '<a href="\$2" target="_blank" rel="noopener noreferrer">\$1</a>')
+        .replace(/\\n/g, '<br>');
+    }
+
+    const pageTitleEl = document.getElementById('pageTitle');
+    const titleEl = document.getElementById('title');
+    const messageEl = document.getElementById('message');
+    const dateEl = document.getElementById('date');
+
+    if (pageTitleEl) pageTitleEl.textContent = title;
+    if (titleEl) titleEl.textContent = title;
+    if (messageEl) messageEl.innerHTML = renderMarkdown(message);
+
+    if (dateEl) {
+      const rawDateText = dateEl.textContent || '';
+      const datePrefix = rawDateText.includes('无时间信息') ? rawDateText.replace('无时间信息', '') : '';
+      dateEl.textContent = \`\${datePrefix}\${date}\`;
+    }
   </script>
 </body>
 
 </html>
+
+
+
 `;
     return new Response(html, {
-      headers: { 'content-type': 'text/html;charset=UTF-8' },
+      headers: {
+        'content-type': 'text/html;charset=UTF-8',
+      },
     });
   },
 };

@@ -5,23 +5,22 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 静态文件服务（如果需要额外文件，这里可以扩展）
+// 静态文件服务
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 主路由：处理 GET 请求，生成 HTML
+// 主路由
 app.get('/', (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const title = url.searchParams.get('title') || '消息推送';
   const message = url.searchParams.get('message') || '无告警信息';
   const date = url.searchParams.get('date') || '无时间信息';
 
-  const html = `
-<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title}</title>
+    <title>\${title}</title>
     <style>
         * {
             margin: 0;
@@ -323,20 +322,30 @@ app.get('/', (req, res) => {
     <div class="particles" id="particles"></div>
    
     <div class="container pulse">
-        <div class="title" id="title">${title}</div>
+        <div class="title" id="title">\${title}</div>
        
         <div class="info-card">
             <div class="info-label">通知内容</div>
-            <div class="info-content" id="message">${message}</div>
+            <div class="info-content" id="message">\${message}</div>
         </div>
        
         <div class="info-card">
             <div class="info-label">时间</div>
-            <div class="info-content" id="date">${date}</div>
+            <div class="info-content" id="date">\${date}</div>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
     <script>
+        // 从 URL 参数读取数据
+        function getUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return {
+                title: urlParams.get('title') || '消息推送',
+                message: urlParams.get('message') || '无告警信息',
+                date: urlParams.get('date') || '无时间信息'
+            };
+        }
+
         // 创建动态粒子背景
         function createParticles() {
             const particlesContainer = document.getElementById('particles');
@@ -377,19 +386,28 @@ app.get('/', (req, res) => {
             }
         }
 
+        // 填充页面内容
+        function fillContent() {
+            const params = getUrlParams();
+            document.getElementById('title').textContent = params.title;
+            document.getElementById('message').textContent = params.message;
+            document.getElementById('date').textContent = params.date;
+            renderMarkdown(); // 渲染 Markdown
+        }
+
+        // 页面加载时调用
         window.onload = function() {
             createParticles();
-            renderMarkdown();
+            fillContent();
         };
     </script>
 </body>
 </html>
-  `;
+`;
 
   res.send(html);
 });
 
-// 启动服务器
 app.listen(PORT, () => {
   console.log(`服务器运行在 http://localhost:${PORT}`);
 });

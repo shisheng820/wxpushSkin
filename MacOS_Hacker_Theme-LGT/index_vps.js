@@ -5,23 +5,22 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 静态文件服务（如果需要额外文件，这里可以扩展）
+// 静态文件服务
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 主路由：处理 GET 请求，生成 HTML
+// 主路由
 app.get('/', (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const title = url.searchParams.get('title') || '消息推送';
   const message = url.searchParams.get('message') || '无告警信息';
   const date = url.searchParams.get('date') || '无时间信息';
 
-  const html = `
-<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="zh-CN" dir="ltr">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>消息推送</title>
+    <title id="pageTitle">\${title}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -152,42 +151,44 @@ app.get('/', (req, res) => {
                 <div class="terminal-button"></div>
                 <div class="terminal-button"></div>
             </div>
-            <div class="terminal-title">消息推送</div>
+            <div class="terminal-title" id="title">\${title}</div>
         </div>
         <div class="terminal-body">
             <div class="info-card">
                 <div class="info-label">通知内容</div>
-                <div class="info-content" id="message">无告警信息</div>
+                <div class="info-content" id="message">\${message}</div>
             </div>
             <div class="info-card">
                 <div class="info-label">时间</div>
-                <div class="info-content" id="date">无时间信息</div>
+                <div class="info-content" id="date">\${date}</div>
             </div>
         </div>
     </div>
 
-    <script>
-        function getUrlParams() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return {
-                title: urlParams.get('title') || '消息推送',
-                message: urlParams.get('message') || '无告警信息',
-                date: urlParams.get('date') || '无时间信息'
-            };
-        }
-
-        function fillContent() {
-            const params = getUrlParams();
-            document.getElementById('message').textContent = params.message;
-            document.getElementById('date').textContent = params.date;
-        }
-
-        window.onload = function() {
-            fillContent();
-        };
-    </script>
       <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
       <script>
+          function getUrlParams() {
+              const urlParams = new URLSearchParams(window.location.search);
+              return {
+                  title: urlParams.get('title') || '消息推送',
+                  message: urlParams.get('message') || '无告警信息',
+                  date: urlParams.get('date') || '无时间信息'
+              };
+          }
+
+          function fillContent() {
+              const params = getUrlParams();
+              const pageTitleEl = document.getElementById('pageTitle');
+              const titleEl = document.getElementById('title');
+              const messageEl = document.getElementById('message');
+              const dateEl = document.getElementById('date');
+
+              if (pageTitleEl) pageTitleEl.textContent = params.title;
+              if (titleEl) titleEl.textContent = params.title;
+              if (messageEl) messageEl.textContent = params.message;
+              if (dateEl) dateEl.textContent = params.date;
+          }
+
           // 创建动态粒子背景
           function createParticles() {
               const particlesContainer = document.getElementById('particles');
@@ -204,20 +205,20 @@ app.get('/', (req, res) => {
                  
                   // 随机大小
                   const size = Math.random() * 3 + 1;
-                  particle.style.width = \`\${size}px\`;
-                  particle.style.height = \`\${size}px\`;
+                  particle.style.width = \\\`\\\${size}px\\\`;
+                  particle.style.height = \\\`\\\${size}px\\\`;
                  
                   // 随机颜色
                   const randomColor = colors[Math.floor(Math.random() * colors.length)];
                   particle.style.background = randomColor;
                  
                   // 随机位置
-                  particle.style.left = \`\${Math.random() * 100}%\`;
-                  particle.style.top = \`\${Math.random() * 100}%\`;
+                  particle.style.left = \\\`\\\${Math.random() * 100}%\\\`;
+                  particle.style.top = \\\`\\\${Math.random() * 100}%\\\`;
                  
                   // 随机动画延迟和持续时间
-                  particle.style.animationDelay = \`\${Math.random() * 20}s\`;
-                  particle.style.animationDuration = \`\${20 + Math.random() * 15}s\`;
+                  particle.style.animationDelay = \\\`\\\${Math.random() * 20}s\\\`;
+                  particle.style.animationDuration = \\\`\\\${20 + Math.random() * 15}s\\\`;
                  
                   particlesContainer.appendChild(particle);
               }
@@ -232,8 +233,9 @@ app.get('/', (req, res) => {
               }
           }
   
-          // 页面加载时调用 
+          // 页面加载时调用
           window.onload = function() {
+              fillContent();
               createParticles();
               renderMarkdown();
           };
@@ -241,12 +243,11 @@ app.get('/', (req, res) => {
 </body>
 </html>
 
-  `;
+`;
 
   res.send(html);
 });
 
-// 启动服务器
 app.listen(PORT, () => {
   console.log(`服务器运行在 http://localhost:${PORT}`);
 });
